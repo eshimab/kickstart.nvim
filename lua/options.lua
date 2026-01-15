@@ -1,4 +1,4 @@
-print 'Hello from ~/.config/nvim/lua/eshim/options.lua'
+print 'Options Loaded > ~/.config/nvim/lua/options.lua'
 
 -- ======= [[ SETTING OPTIONS ]] ============
 -- see `:help vim.opt`
@@ -8,6 +8,8 @@ print 'Hello from ~/.config/nvim/lua/eshim/options.lua'
 -- ======= [[ SANE DEFAULTS ]] ========
 -- These are options with their default values
 vim.opt.autoindent = true
+vim.opt.shiftwidth = 4 -- We ensure this workd in the /after dir
+
 vim.opt.autoread = true
 vim.opt.autowrite = false
 vim.opt.autowriteall = false
@@ -40,10 +42,15 @@ vim.opt.binary = false
 --     You can also use the -b Vim argument.
 --
 
+-- highlight searched for text
+vim.opt.hlsearch = true
+
 vim.opt.writebackup = true
 -- 'writebackup' 'wb' 'nowritebackup' 'nowb'
 --     Make a backup file before overwriting a file.
 --     The backu0p is remobed after the file was successfully overwritten, unless the 'backup' option is also on
+-- ======= FOLDING =======
+vim.opt.foldmethod = 'indent'
 
 -- ======= UNDOS ======
 vim.opt.undolevels = 2000
@@ -57,7 +64,7 @@ vim.opt.breakindent = true
 -- save undo history
 vim.opt.undofile = true
 
--- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
+--Case-insensitive searching UNLESS \C or one or more capital letters in the search term
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 
@@ -89,7 +96,7 @@ vim.opt.scrolloff = 10
 -- ========== LINE NUMBERS =====================
 -- Make line numbers default
 vim.opt.number = true
-vim.opt.relativenumber = true
+vim.opt.relativenumber = false
 
 -- ============= MOUSE MODE ========================
 -- Enable mouse, may be useful for resizing split windows
@@ -99,4 +106,6 @@ vim.opt.mouse = 'a'
 -- Sync clipboard between OS and NEOVIM
 -- Remove this option if you want your OS clipboard to remain independent
 -- see `:help clipboard`
-vim.opt.clipboard = 'unnamedplus'
+-- vim.opt.clipboard = 'unnamedplus'
+-- Leave the clipboard option blank (the default) to give direct access to registers
+vim.opt.clipboard = ''
