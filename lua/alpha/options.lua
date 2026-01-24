@@ -51,6 +51,7 @@ vim.opt.writebackup = true
 --     The backu0p is remobed after the file was successfully overwritten, unless the 'backup' option is also on
 -- ======= FOLDING =======
 vim.opt.foldmethod = 'indent'
+vim.opt.foldlevelstart = 3
 
 -- ======= UNDOS ======
 vim.opt.undolevels = 2000
