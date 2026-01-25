@@ -32,6 +32,7 @@ end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
 -- Set path for python3
+--
 -- vim.g.python3_host_prog = '/opt/homebrew/opt/python@3.12/libexec/bin/python3'
 
 -- NOTE: Here is where you install your plugins.
