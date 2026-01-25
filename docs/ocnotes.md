@@ -203,3 +203,106 @@ This plan should isolate whether it's a cache issue or a real problem in the loo
 2. If you want a specific subset (e.g., only leader keys or a certain mode), clarify for a tailored command.
 
 This plan covers methods to list keymaps without changes—let me know your preference (e.g., which method or subset), and I can refine or provide exact commands! If you encounter issues, share the output of `:map` for debugging.
+
+### Find and Replace in Neovim
+
+#### Case-Sensitive Separate Commands
+Replace both variations with individual commands:
+
+```vim
+:%s/v_eq_n2/v02_n2/g
+:%s/V_EQ_N2/v02_n2/g
+```
+
+#### Case-Insensitive Single Command
+Use case-insensitive flag to catch both patterns at once:
+
+```vim
+:%s/\cv_eq_n2/v02_n2/g
+```
+
+#### Pattern Alternation
+Match both exact patterns with alternation:
+
+```vim
+:%s/\v(v_eq_n2|V_EQ_N2)/v02_n2/g
+```
+
+#### Very Magic with Case-Insensitive Flag
+Combine very magic mode with case-insensitivity:
+
+```vim
+:%s/\vv_eq_n2/v02_n2/gi
+```
+
+**Recommendation**: Use `:%s/\cv_eq_n2/v02_n2/g` for clean, efficient replacement of both variations.
+
+### Neovim Substitute Command Syntax Breakdown
+
+#### Command Components
+In `:%s/v_eq_n2/v02_n2/g`, each part has specific meaning:
+
+##### Range Specifier (`%`)
+- `%` - Entire file (all lines)
+- `:s` - Current line only  
+- `:1,5s` - Lines 1-5
+- `:'<,'>s` - Visually selected lines
+
+##### Substitute Command (`s`)
+- `s` - Core search and replace operation
+
+##### Patterns
+- `v_eq_n2` - Search pattern (what to find)
+- `v02_n2` - Replacement pattern (what to replace with)
+
+##### Flags (`g`)
+- `g` - Global flag. Without it: only first occurrence per line replaced. With it: ALL occurrences per line replaced.
+
+#### Other Common Flags
+```vim
+i  - case-insensitive
+c  - confirm each replacement  
+I  - case-sensitive (when 'ignorecase' is set)
+```
+
+#### Full Command Meaning
+"Across the entire file (`%`), substitute (`s`) all occurrences of `v_eq_n2` with `v02_n2`, globally on each line (`g`)."
+
+### Very Magic Mode (\v) in Neovim Search
+
+#### What is Very Magic (`\v`)?
+The `\v` flag enables "very magic" mode which changes regex character interpretation:
+
+- `\v` = Very magic mode
+- Most regex metacharacters don't need escaping
+- Makes regex patterns cleaner and more readable
+
+#### Regex Behavior Comparison
+
+**Without `\v` (default magic):**
+```vim
+:%s/(foo|bar)/baz/g     # Won't work - need escaping
+:%s/\(foo\|bar\)/baz/g  # Correct but verbose
+```
+
+**With `\v` (very magic):**
+```vim
+:%s/\v(foo|bar)/baz/g   # Works directly - cleaner
+```
+
+#### Why Used in Your Example
+In `:%s/\vv_eq_n2/v02_n2/gi`, the `\v` isn't strictly necessary since `v_eq_n2` has no special regex characters, but it's good practice when:
+
+- Pattern contains regex metacharacters like `()`, `|`, `+`, `?`, `{}`
+- Want consistent "very magic" behavior across searches
+- Coming from other regex engines where this syntax is common
+
+#### Magic Levels Available
+```vim
+\v  # Very magic: most characters are special
+\m  # Magic (default): fewer characters are special  
+\M  # No magic: almost no characters are special
+\V  # Very no magic: only backslash is special
+```
+
+The very magic flag provides future-proofing for regex patterns and consistency.
