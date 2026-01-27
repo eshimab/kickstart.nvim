@@ -1,4 +1,4 @@
 return {
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
-  enabled = true,
+  enabled = false,
 }
