@@ -211,7 +211,6 @@ Replace both variations with individual commands:
 
 ```vim
 :%s/v_eq_n2/v02_n2/g
-:%s/V_EQ_N2/v02_n2/g
 ```
 
 #### Case-Insensitive Single Command
@@ -306,3 +305,146 @@ In `:%s/\vv_eq_n2/v02_n2/gi`, the `\v` isn't strictly necessary since `v_eq_n2` 
 ```
 
 The very magic flag provides future-proofing for regex patterns and consistency.
+
+## Tuesday Jan 27 2026 Native Neovim list continuation
+
+### 23] Successful implementation summary
+Replacement of `autolist.nvim` with a robust native-integrated Lua solution.
+
+#### Overview
+We replaced the aging `autolist.nvim` with a custom Lua implementation in `after/ftplugin/markdown.lua`. This solution uses atomic buffer manipulation APIs (`nvim_buf_set_lines`) to ensure stability and compatibility with completion engines like `blink.cmp`.
+
+#### Implementation Logic
+The core logic resides in a buffer-local `<CR>` mapping that performs the following:
+1. **Marker Detection:** Identifies unordered bullets (`-`, `*`, `+`), ordered numbers (`1.`, `1)`), and checkboxes (`[ ]`).
+2. **Ordered Incrementing:** Automatically calculates and inserts the next number in a sequence.
+3. **Checkbox Persistence:** Carries over checkbox markers to new lines.
+4. **Auto-Termination:** Cleanly ends the list if Enter is pressed on an empty marker.
+
+#### Code Reference
+```lua
+-- Robust Pure API list continuation
+vim.keymap.set('i', '<CR>', function()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local row, col = cursor[1], cursor[2]
+  local line = vim.api.nvim_get_current_line()
+  
+  -- Content before and after the cursor
+  local prefix = line:sub(1, col)
+  local suffix = line:sub(col + 1)
+
+  -- 1. Pattern matching for various list types
+  local indent, marker, punct, checkbox
+  
+  -- Match different marker styles:
+  indent, marker, punct, checkbox = prefix:match('^(%s*)(%d+)([.)])%s*(%[[ xX]%]%s*)')
+  if not marker then indent, marker, punct = prefix:match('^(%s*)(%d+)([.)])%s+') end
+  if not marker then indent, marker, checkbox = prefix:match('^(%s*)([-*+])%s*(%[[ xX]%]%s*)') end
+  if not marker then indent, marker = prefix:match('^(%s*)([-*+])%s+') end
+
+  -- Fallback if not in a list
+  if not marker then
+    return vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<CR>', true, true, true), 'n', false)
+  end
+
+  -- 2. Check for termination (Enter on empty item)
+  local is_empty = false
+  if checkbox then
+    if prefix:match('^%s*[-*+]%s*%[[ xX]%]%s*$') or prefix:match('^%s*%d+[.)]%s*%[[ xX]%]%s*$') then
+      is_empty = true
+    end
+  else
+    if prefix:match('^%s*[-*+]%s*$') or prefix:match('^%s*%d+[.)]%s*$') then
+      is_empty = true
+    end
+  end
+
+  if is_empty then
+    vim.api.nvim_set_current_line(indent .. suffix)
+    vim.api.nvim_buf_set_lines(0, row, row, false, { indent })
+    vim.api.nvim_win_set_cursor(0, { row + 1, #indent })
+    return
+  end
+
+  -- 3. Construct next marker
+  local next_marker
+  if marker:match('%d+') then
+    next_marker = indent .. (tonumber(marker) + 1) .. punct .. ' ' .. (checkbox or '')
+  else
+    next_marker = indent .. marker .. ' ' .. (checkbox or '')
+  end
+
+  -- 4. Atomically insert the new line and set cursor
+  vim.api.nvim_set_current_line(prefix)
+  vim.api.nvim_buf_set_lines(0, row, row, false, { next_marker .. suffix })
+  vim.api.nvim_win_set_cursor(0, { row + 1, #next_marker })
+end, { buffer = true, desc = 'Smart list continuation' })
+```
+
+### 28] Explanation of Lua pattern matching
+The line you highlighted uses **Lua Patterns**, which are specific to the Lua language. While they look similar to standard Regular Expressions (regex), they are a smaller, faster, and slightly different implementation unique to Lua.
+
+#### Is it Vim or Lua specific?
+It is **Lua-specific**. Neovim has its own regex engine (used in commands like `:%s/find/replace/`), but when you are writing logic inside a `.lua` file using `string:match()` (`function`), you are using Lua's native pattern engine.
+
+#### Breakdown of the pattern: `'^(%s*)(%d+)([.)])%s+'`
+
+| Symbol   | Technical Term                 | Description                                                                                                                      |
+| :------- | :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| `^`      | **Anchor**                     | Forces the match to start at the very beginning of the `prefix` (`string`).                                                      |
+| `(%s*)`  | **Capture Group** (`%s` class) | Matches 0 or more whitespace characters (spaces/tabs). Captured into the `indent` (`string`) variable.                           |
+| `(%d+)`  | **Capture Group** (`%d` class) | Matches 1 or more digits. Captured into the `marker` (`string`) variable.                                                        |
+| `([.)])` | **Capture Group** (Set)        | Matches exactly one character that is either a literal `.` or a literal `)`. Captured into `punct` (`string`).                   |
+| `%s+`    | **Quantifier**                 | Matches 1 or more whitespace characters *after* the punctuation. It isn't in parentheses, so it is "matched" but not "captured." |
+
+#### Key differences from standard Regex:
+*   **Escape Character:** Lua uses the percent sign `%` (`string`) as an escape character (e.g., `%d` for digits) instead of the backslash `\` used in Vim or JavaScript.
+*   **Syntactic Sugar:** The colon syntax `prefix:match(...)` is **syntactic sugar** (`code`) for `string.match(prefix, ...)`. It automatically passes `prefix` as the first argument to the function.
+
+This specific pattern ensures that `1. Hello` is recognized as a list, but a standalone number like `In 1999, it happened` is ignored because it lacks the trailing punctuation and space.
+
+### 29] Lua Character Sets and Pattern syntax
+The `[]` (`string`) symbols in Lua patterns define a **Character Class** (frequently called a **Set**). It tells Lua: "Match exactly one character, as long as it is one of the characters inside these brackets."
+
+#### How it compares to Regex
+While it is similar to standard regex, there are two very important differences in Lua's implementation:
+
+1.  **No Alternation Pipe:** In standard regex, you might write `(\.|\))` to match a dot OR a parenthesis. In Lua patterns, the `|` (`string`) character has no special meaning and is not used for "OR." Instead, the `[]` (`string`) brackets handle the "OR" logic implicitly. 
+    - `[.)]` (`string`) means "Match `.` OR `)`."
+    - If you wrote `[.|)]` in Lua, it would match a dot, a pipe, or a parenthesis.
+
+2.  **Escaping inside Sets:** In standard regex, a `.` (`string`) usually means "any character" and must be escaped (`\.`) to mean a literal dot. In Lua patterns:
+    - **Outside** a set, `.` (`string`) is a magic character (matches anything).
+    - **Inside** a set `[]`, most magic characters (including `.`, `+`, `*`, `-`) automatically lose their special meaning and are treated as literals.
+    - Therefore, `[.)]` (`string`) safely matches a literal period or a literal closing parenthesis without needing percent-escapes.
+
+#### Syntactic Sugar Note
+When we use `([.)])` (`string`), we are combining a **Capture Group** (`()`) with a **Character Class** (`[]`). 
+- The `[]` (`string`) defines *what* to match.
+- The `()` (`string`) tells Lua to *capture* that specific match and assign it to our variable `punct` (`string`).
+
+This is a very efficient way to handle different list styles like `1.` and `1)` in a single line of code.
+
+### 30] Explaining the checkbox pattern
+The pattern `(%[[ xX]%]%s*)` (`string`) is a great example of how Lua patterns handle "magic" characters that need to be treated as literals.
+
+#### Breakdown of the pattern:
+
+| Symbol      | Technical Term        | Description                                                                                                                                                             |
+| :---------- | :-------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `(` ... `)` | **Capture Group**     | Everything inside the parentheses is captured into the `checkbox` (`string`) variable.                                                                                  |
+| `%[`        | **Escaped Character** | Matches a literal left square bracket `[`. In Lua, `[` is a magic character used to start a set, so the `%` (`string`) "escapes" it.                                     |
+| `[ xX]`     | **Character Set**     | Matches exactly one character that is either a **space**, a lowercase **x**, or an uppercase **X**. This allows us to detect both empty and completed checkboxes.       |
+| `%]`        | **Escaped Character** | Matches a literal right square bracket `]`. Like the left bracket, it must be escaped with `%` (`string`) to be treated as a literal.                                   |
+| `%s*`       | **Quantifier**        | Matches zero or more whitespace characters following the checkbox.                                                                                                      |
+
+#### Why the Escaping is Different
+In standard regex, you might see `\[[ xX]\]`. Because Lua uses `%` (`string`) as its escape character instead of `\`, the syntax becomes `%[[ xX]%]` (`string`).
+
+#### Syntactic Sugar and Logical Flow
+When this pattern is combined with the marker pattern, the logic flows like this:
+1. Find the indentation.
+2. Find the marker (like `-`).
+3. **Optional Match:** The code then looks for this checkbox pattern. Because we use `prefix:match(...)`, if the checkbox isn't there, the variable will simply be `nil` (`boolean`), and our script knows it's a "simple" list item.
+
+This is a very powerful way to handle **syntactic sugar** (`code`) like checkboxes in Markdown without needing multiple complex functions.

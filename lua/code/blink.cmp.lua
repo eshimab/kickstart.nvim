@@ -1,5 +1,6 @@
 return { -- ============= blink.cmp ===========
   'saghen/blink.cmp',
+  enabled = true,
   version = '1.*',
   build = 'cargo build --release', -- required for fuzzy.implementation.*rust*
   dependencies = {
@@ -39,6 +40,7 @@ return { -- ============= blink.cmp ===========
   opts = {
     keymap = {
       preset = 'default',
+      ['<CR>'] = { 'accept', 'fallback' },
     },
     appearance = {
       nerd_font_variant = 'mono',
