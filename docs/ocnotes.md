@@ -15,22 +15,12 @@ Here's a side-by-side of the default plugins in kickstart vs. your config. I've 
 | **Formatting**       | `stevearc/conform.nvim`                                        | `stevearc/conform.nvim`                                                       | Same plugin, but config differs (see below).                      |
 | **Statusline**       | Mini.statusline                                                | Mini.statusline                                                               | Same.                                                             |
 | **Treesitter**       | `nvim-treesitter`                                              | `nvim-treesitter`                                                             | Same, but kickstart added `diff` to ensure_installed.             |
-| **Gitsigns**         | `lewis6991/gitsigns.nvim`                                      | `lewis6991/gitsigns.nvim`                                                     | Same.                                                             |
-| **Which-Key**        | `folke/which-key.nvim`                                         | `folke/which-key.nvim`                                                        | **[4]**                                                           |
-| **Colorscheme**      | `folke/tokyonight.nvim`                                        | `folke/tokyonight.nvim`                                                       | Same.                                                             |
-| **Todo Comments**    | `folke/todo-comments.nvim`                                     | `folke/todo-comments.nvim`                                                    | Same.                                                             |
-| **Mini Plugins**     | `echasnovski/mini.nvim` (ai, surround, statusline)             | `echasnovski/mini.nvim` (same)                                                | Same.                                                             |
-| **Lazydev**          | `folke/lazydev.nvim`                                           | `folke/lazydev.nvim`                                                          | Same.                                                             |
-| **Telescope**        | `nvim-telescope/telescope.nvim` with deps                      | `nvim-telescope/telescope.nvim` with deps                                     | Same.                                                             |
-| **New in Kickstart** | -                                                              | (Your extras: Harpoon, Neo-tree, UFO, Autopairs, Indent-blankline, Lint, DAP) | **[5]**                                                           |
 
 #### Plugin Differences Notes
 
 1. Kickstart replaced vim-sleuth with guess-indent for better auto-detection. If you're happy with vim-sleuth, no need to change; guess-indent is more modern but similar.
 2. Kickstart fully switched to Blink.cmp as the default (faster, simpler than nvim-cmp). You have both installed—consider removing nvim-cmp to avoid conflicts and match kickstart. Blink is now the recommended choice.
 3. Kickstart updated to the new `mason-org` namespace (the original maintainer moved). Your config uses the old `williamboman`—update to avoid deprecation warnings.
-4. Same, but spec groups updated (e.g., kickstart uses `<leader>s` for search, you have more groups).
-5. Kickstart removed these from defaults to stay minimal. Keep them if you use them.
 
 ### Plugins You Have That Kickstart Removed as Defaults
 - Harpoon, Neo-tree, nvim-ufo, nvim-autopairs, indent-blankline, nvim-lint, nvim-dap: These were in older kickstart versions but stripped out for simplicity. Kickstart now focuses on core LSP/completion without extras.
@@ -160,7 +150,7 @@ Based on reading your `remap.lua` file, the structure for exporting `M.telescope
 6. **Questions for Clarification**
    1. After clearing caches and reloading, does the error still occur?
    2. What does `:lua local r = require 'remap'; print(#r.telescope_keymaps)` return (should be the number of keymaps, e.g., 7)?
-   3. Did you modify the Telescope config in `init.lua` recently? Can you confirm the exact code around line 110?
+   3. Did you modify the Telescope config in `init.lua recently? Can you confirm the exact code around line 110?
 
 This plan should isolate whether it's a cache issue or a real problem in the loop. Start with clearing caches, then test the table contents. If you provide the results, I can refine further. If it's still broken, we may need to debug the Telescope config directly.
 
@@ -448,3 +438,59 @@ When this pattern is combined with the marker pattern, the logic flows like this
 3. **Optional Match:** The code then looks for this checkbox pattern. Because we use `prefix:match(...)`, if the checkbox isn't there, the variable will simply be `nil` (`boolean`), and our script knows it's a "simple" list item.
 
 This is a very powerful way to handle **syntactic sugar** (`code`) like checkboxes in Markdown without needing multiple complex functions.
+
+### 36] CLI directory management tips
+----------------------------------
+
+You can achieve this using **Variables** (`string`), the **Directory Stack**, or a built-in shortcut.
+
+#### 1. Using Variables
+You can assign the output of `pwd` (`command`) or the value of the `$PWD` (`variable`) to a custom name.
+
+```bash
+target=$PWD    # Saves current path to 'target' (variable)
+cd /tmp        # Change directory
+cd "$target"   # Returns to the saved path
+```
+
+#### 2. The `cd -` Shortcut
+If you only need to toggle between the **current** and **previous** directory, use the hyphen:
+
+```bash
+cd /some/very/long/path
+cd /tmp
+cd -           # Jumps back to /some/very/long/path
+```
+
+#### 3. Using `pushd` and `popd`
+For a more robust approach, use the **Directory Stack** (`stack`). This "pushes" your current location onto a list so you can "pop" back to it later.
+
+```bash
+pushd .        # Pushes current directory onto the stack
+cd /etc
+popd           # Returns to the directory at the top of the stack
+```
+
+**Syntactic Sugar:** In many shells, `cd -` is **syntactic sugar** (`code`) for `cd "$OLDPWD"`.
+
+### 39] Explaining Git Stashing
+-----------------------------
+
+To **Stash** something in Git means to take your uncommitted changes (both in the **Working Directory** (`folder`) and the **Staging Area** (`index`)) and put them into a temporary storage area (the **Stash Stack** (`stack`)).
+
+#### 1. Why use it?
+It is most useful when you are in the middle of a task and need to switch branches or perform a quick fix, but your current code is too messy or incomplete to **Commit** (`command`).
+
+#### 2. Common Operations
+
+| Command           | Technical Action                                                                                             |
+| :---------------- | :----------------------------------------------------------------------------------------------------------- |
+| `git stash`       | Saves your changes and reverts your working directory to match the `HEAD` (`pointer`) commit.                |
+| `git stash list`  | Displays all stashed changes in the stack.                                                                   |
+| `git stash pop`   | Removes the most recent stash from the stack and re-applies it to your code.                                 |
+| `git stash apply` | Re-applies the changes but keeps them in the stash stack for future use.                                     |
+
+#### 3. Key Concepts
+*   **Dirty State:** A working directory with uncommitted changes. Stashing "cleans" this state.
+*   **Last In, First Out (LIFO):** The stash operates as a stack. The most recent thing you stashed is the first thing that `pop` will return.
+*   **Untracked Files:** By default, `git stash` only saves tracked files. To include new files you haven't added yet, you must use the `-u` (`flag`) (include-untracked).
