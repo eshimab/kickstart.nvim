@@ -13,10 +13,32 @@ end
 -- See `:help vim.keymap.set()`
 
 -- Clear on highlight on search by pressing <Esc> in normal mode
-vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = 'clear highlight of search' })
 
 -- Diagnostic Keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+
+-- Insert space after cursor and stay on the space in Normal Mode
+require('which-key').add {
+  { '<leader>s', group = '[s]pace insertions' },
+  { '<leader>S', group = '[S]earch Telescope' },
+}
+vim.keymap.set('n', '<leader>sl', 'a <Esc>', { desc = 'Insert space after cursor' })
+vim.keymap.set('n', '<leader>sh', 'i <Esc>', { desc = 'Insert space before cursor' })
+vim.keymap.set('n', '<leader>sj', 'o <Esc>', { desc = 'Insert space below line' })
+vim.keymap.set('n', '<leader>sk', 'O <Esc>', { desc = 'Insert space above line' })
+
+require('which-key').add {
+  { '<leader>c',  group = 'change something...' },
+  { '<leader>ci', group = 'inside' },
+  { '<leader>cw', group = 'inside' },
+}
+vim.keymap.set('n', '<leader>cx', 'ciw', { desc = '[c]hange [i]n [w]ord' })
+vim.keymap.set('n', '<leader>cc', 'gcc', { desc = 'toggle comment  on line' })
+vim.keymap.set('n', '<leader>cib', 'cib', { desc = '[c]hange [i]n [b]alanced pair' })
+vim.keymap.set('n', '<leader>cu', 'gUiw', { desc = '[g] [U]ppercase [i]nner [w]ord' })
+
+--vim.keymap.set('n', '<leader>csaiw', 'saiw', { desc = '[s]urround [a]dd [i]nside [w]ord' })
 
 -- Navigation binds
 local kmt_nav = {

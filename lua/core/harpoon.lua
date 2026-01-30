@@ -9,6 +9,12 @@ return { -- ============= Harpoon ===========
     local harpoon_extensions = require 'harpoon.extensions'
     harpoon:extend(harpoon_extensions.builtins.highlight_current_file())
 
+    local ok, wk = pcall(require, 'which-key')
+    if ok then
+      wk.add {
+        { '<leader>v', group = 'harpoon' },
+      }
+    end
     vim.keymap.set('n', '<leader>vc', function()
       harpoon:list():add()
     end, { desc = 'harpoon add to list' })

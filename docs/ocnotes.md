@@ -125,34 +125,7 @@ Based on reading your `remap.lua` file, the structure for exporting `M.telescope
    3. **Isolate Telescope Config**: Temporarily comment out the remap-related lines in Telescope's `config` function (around line 110 in `init.lua`), reload, and check if Telescope loads. If yes, the issue is in the loop.
    4. **Check Unpack Manually**: Run `:lua local r = require 'remap'; vim.keymap.set(unpack(r.telescope_keymaps[1]))` to test the first entry. If it fails, fix that entry.
    5. **Error Details**: After reload, check `:messages` again for updated errors. Note if the line number changed.
-
-4. **Fix Suggestions**
-   1. **If Cached Error**: Clearing caches and reloading should resolve it, as the manual require works.
-   2. **If Unpack Issue**: Add error handling to the loop: `for _, km in ipairs(remap.telescope_keymaps or {}) do if #km == 4 then vim.keymap.set(unpack(km)) end end` to skip bad entries.
-   3. **Fallback**: If issues persist, revert Telescope config to inline keymaps (remove the require and loop) and re-add the import later.
-   4. **Ensure Correct Code in init.lua**: Confirm your Telescope config has:
-      ```lua
-      config = function()
-        local remap = require 'remap'
-        if remap and remap.telescope_keymaps then
-          for _, km in ipairs(remap.telescope_keymaps) do
-            vim.keymap.set(unpack(km))
-          end
-        end
-        -- Rest of config...
-      end,
-      ```
-
-5. **Post-Fix Verification**
-   - Reload and test `:Telescope help_tags` and `<leader>sh`.
-   - If fixed, the import works; if not, share the new error details.
-
-6. **Questions for Clarification**
-   1. After clearing caches and reloading, does the error still occur?
-   2. What does `:lua local r = require 'remap'; print(#r.telescope_keymaps)` return (should be the number of keymaps, e.g., 7)?
-   3. Did you modify the Telescope config in `init.lua recently? Can you confirm the exact code around line 110?
-
-This plan should isolate whether it's a cache issue or a real problem in the loop. Start with clearing caches, then test the table contents. If you provide the results, I can refine further. If it's still broken, we may need to debug the Telescope config directly.
+   6. **Post-Fix Verification**: Reload and test `:Telescope help_tags` and `<leader>sh`. If fixed, the import works; if not, share the new error details.
 
 ### Getting a List of Neovim Keymaps
 
@@ -191,8 +164,6 @@ This plan should isolate whether it's a cache issue or a real problem in the loo
 #### Recommended Starting Point
 1. Try `:Telescope keymaps` first for an interactive list (fits your config).
 2. If you want a specific subset (e.g., only leader keys or a certain mode), clarify for a tailored command.
-
-This plan covers methods to list keymaps without changes—let me know your preference (e.g., which method or subset), and I can refine or provide exact commands! If you encounter issues, share the output of `:map` for debugging.
 
 ### Find and Replace in Neovim
 
@@ -544,3 +515,201 @@ Kickstart defaults to `vim.o.clipboard = 'unnamedplus'`.
 | **LSP**       | Dynamic Handlers        | Explicit Enable Loop       | Maintainability vs. Control         |
 | **Clipboard** | Internal Registers Only | Scheduled `unnamedplus`    | Registry Privacy vs. OS Integration |
 | **Setup**     | Modular (`require`)     | Monolithic (Inline)        | Scalability vs. Readability         |
+
+### 68] Vim motions for changing within quotes
+-----------------------------------------------
+
+In your current setup, the motion to "change within quotes" is handled by **Neovim's built-in logic** and enhanced by **`mini.ai`** (`plugin`).
+
+#### 1. The Standard Motion
+*   **`ci"`**: **[C]hange [I]nside ["]double-quote**.
+*   **`ci'`**: **[C]hange [I]nside [']single-quote**.
+*   **`ciq`**: **[C]hange [I]nside [q]uote** (This is a special **Syntactic Sugar** (`code`) provided by `mini.ai` that targets the nearest quote of any type).
+
+#### 2. `mini.ai` Enhancements (Targeting Content)
+Because you have `mini.ai` active, you have access to "Smart Text Objects." This allows you to target quotes that are not currently under your cursor:
+*   **`cin"`**: Change inside the **[n]ext** double quote.
+*   **`cil"`**: Change inside the **[l]ast** (previous) double quote.
+
+#### 3. `mini.surround` (Targeting the Quotes themselves)
+While `mini.ai` helps you change the **text inside**, `mini.surround` is used to change the **quotes themselves**:
+*   **`sd"`**: **[S]urround [D]elete ["]quote**. (Removes the quotes but keeps the text).
+*   **`sr"'`**: **[S]urround [R]eplace ["] with [']**. (Swaps double quotes for single quotes).
+
+#### Summary of Roles
+| Plugin            | Action Type             | Example                          |
+| :---------------- | :---------------------- | :------------------------------- |
+| **`mini.ai`**      | **Text Object** (`code`) | `ci"` (Change the words inside)  |
+| **`mini.surround`** | **Surround** (`code`)    | `sr"'` (Change the quote marks) |
+
+### 69] Explaining text objects and delimiters
+--------------------------------------------
+
+#### 1. Is "Delimiter" the correct term?
+Yes, **Delimiter** (`technical_term`) is very common. In official Vim documentation, these are often called **Surrounding Characters** or **Enclosed Text Objects** (`technical_term`).
+
+#### 2. Does `ci` work with other delimiters?
+Absolutely. The `ci` (**Change Inside**) logic works with a wide variety of paired characters.
+
+| Command         | Target Delimiter                     |
+| :-------------- | :----------------------------------- |
+| `ci(` or `cib`  | Parentheses `()`                     |
+| `ci[`           | Square brackets `[]`                 |
+| `ci{` or `ciB`  | Curly braces `{}`                    |
+| `cit`           | XML/HTML Tags (e.g., `<p>text</p>`)  |
+| `ci<`           | Angle brackets `<>`                  |
+
+### 70] Summary of "Smart" text objects in your config
+-----------------------------------------------------
+
+I have confirmed that your current **`mini.ai`** (`plugin`) configuration uses the standard defaults, which already includes very powerful "generic" targets. 
+
+#### 1. The "Automatic" text objects
+You don't need a single key for "everything," because `mini.ai` has already grouped them into logical sets:
+
+*   **`b` (Balanced):** Covers `(`, `)`, `[`, `]`, `{`, `}`.
+    - `cib` will change inside the closest of any of these brackets.
+*   **`q` (Quote):** Covers `"`, `'`, `` ` ``.
+    - `ciq` will change inside the closest of any of these quotes.
+
+#### 2. Comparison of Operators
+
+| Logic               | Command | Result                                       |
+| :------------------ | :------ | :------------------------------------------- |
+| **Standard Vim**    | `ci"`   | Targets only double quotes.                  |
+| **`mini.ai` Sugar** | `ciq`   | Targets double, single, or backticks.        |
+| **Standard Vim**    | `ci(`   | Targets only parentheses.                    |
+| **`mini.ai` Sugar** | `cib`   | Targets parentheses, square, or curly braces.|
+
+### 71] Using `mini.surround` to add delimiters
+--------------------------------------------
+
+To "surround" a word with brackets using your current **`mini.surround`** (`plugin`) configuration, you use the **`sa`** (**Surround Add**) operator.
+
+#### 1. The Command Sequence
+To change `word` into `[word]`, place your cursor anywhere on the word and type:
+
+`saiw]` (`key_sequence`)
+
+#### 2. Technical Breakdown
+*   **`sa`**: The **Surround Add** (`operator`).
+*   **`iw`**: The **Inner Word** (`text_object`). This tells Neovim *what* to surround.
+*   **`]`**: The **Delimiter** (`technical_term`). This tells Neovim *which* character to use.
+
+#### 3. Padding Logic (The `[` vs `]` distinction)
+`mini.surround` has a clever feature for handling whitespace:
+*   **`saiw]`**: Results in `[word]` (No extra spaces).
+*   **`saiw[`**: Results in `[ word ]` (Includes **Space Padding** (`technical_term`)).
+
+#### Summary table of Surround Actions
+
+| Action      | Command   | Technical Result     |
+| :---------- | :-------- | :------------------- |
+| **Add**     | `saiw]`   | `word` → `[word]`    |
+| **Delete**  | `sd]`     | `[word]` → `word`    |
+| **Replace** | `sr](`    | `[word]` → `(word)`  |
+
+### 73] Surrounding a single character with `mini.surround`
+--------------------------------------------------------
+
+To surround a single letter with parentheses using your current configuration, you have two primary methods.
+
+#### 1. Using a Motion (Normal Mode)
+You can use the `sa` (**Surround Add**) operator followed by a **Motion** (`technical_term`) that covers exactly one character. The most common motion for this is `l` (right).
+
+**Command:** `sal)` (`key_sequence`)
+
+*   **`sa`**: Surround Add (`operator`)
+*   **`l`**: Move right (`motion`). Since it moves one character, it defines the target as the current letter.
+*   **`)`**: Parentheses (`delimiter`).
+
+#### 2. Using Visual Mode (Recommended for precision)
+If you find motions tricky for single letters, you can use **Visual Mode** (`mode`) to explicitly select the letter first.
+
+**Command:** `vsa)` (`key_sequence`)
+
+*   **`v`**: Enter visual mode (selects the current character).
+*   **`sa`**: Trigger the Surround Add operator.
+*   **`)`**: Select the parenthesis delimiter.
+
+#### 3. Technical Detail: Space Padding
+As with words, the choice of delimiter determines the padding:
+*   `sal)` results in `(x)`
+*   `sal(` results in `( x )` (**Syntactic Sugar** (`code`) for automated padding).
+
+## Wednesday Jan 28 2026 Linter rule customization
+
+### 84] Integrating linter rule overrides
+--------------------------------------------
+
+I have analyzed the best way to integrate these overrides into your modular configuration.
+
+#### Proposed Changes for `lua/core/nvim-lint.lua`
+
+I recommend inserting the following logic into the `config` (`function`) block. This ensures that the arguments are applied only when the `nvim-lint` plugin is initialized.
+
+```lua
+    local lint = require 'lint'
+    
+    -- 1. Assign linters to filetypes
+    lint.linters_by_ft = {
+      markdown = { 'markdownlint' },
+    }
+
+    -- 2. Customize markdownlint arguments
+    -- We access the 'markdownlint' object (table) and modify its 'args' (table)
+    local markdownlint = lint.linters.markdownlint
+    markdownlint.args = {
+      '--disable',
+      'MD012', -- multiple-blanks: No multiple consecutive blank lines
+      'MD030', -- list-marker-space: Spaces after list markers
+      '--',    -- Sentinel (string) indicating end of flags; files follow
+    }
+
+    -- 3. Create the autocommand group (existing logic)
+    local lint_augroup = vim.api.nvim_create_augroup('lint', { clear = true })
+    -- ... rest of your file ...
+```
+
+#### Technical Breakdown
+*   **`markdownlint.args`**: This is a **Table** (`table`) of strings that `nvim-lint` passes to the shell when it executes the linter.
+*   **`--disable`**: This is the **Flag** (`string`) recognized by the `markdownlint` CLI to ignore specific rules.
+*   **`--`**: This is a common CLI convention (Sentinel) that tells the program to stop looking for flags and treat all subsequent arguments as file paths. This is important because `nvim-lint` will append the current file path to the end of this list.
+
+#### Alternative: Project-wide Configuration
+If you prefer not to "hardcode" these rules in your Neovim config, you can achieve the same result by creating a file named `.markdownlint.json` in your project root with this content:
+```json
+{
+  "MD012": false,
+  "MD030": false
+}
+```
+Neovim will automatically pick this up, and it has the benefit of working for other people who might collaborate on your project.
+
+### 86] Commands for converting text to uppercase
+-------------------------------------------------
+
+In Neovim, making a word uppercase is performed using an **Operator** (`technical_term`) combined with a **Motion** or **Text Object** (`technical_term`).
+
+#### 1. The Operator Method (Normal Mode)
+The standard command to convert text to uppercase is **`gU`**. To target a word, you use the following sequences:
+
+| Command | Technical Result                                                      |
+| :------ | :-------------------------------------------------------------------- |
+| `gUiw`  | Uppercase **inner word** (does not include surrounding whitespace).   |
+| `gUaw`  | Uppercase **a word** (includes trailing whitespace).                  |
+| `gUU`   | Uppercase the **entire current line**.                                |
+
+#### 2. The Visual Mode Method
+If you prefer selecting the text first:
+1.  **`viw`**: Visually select the inner word.
+2.  **`U`**: Convert the selection to uppercase.
+
+#### 3. The "Toggle" Shortcut
+If you only need to change the case of a single character or a few characters, you can use:
+*   **`~`**: Toggles the case (lower to upper, upper to lower) of the character under the cursor and moves the cursor right.
+
+#### Technical Summary
+*   **`gU`**: The **Uppercase Operator** (`code`).
+*   **`gu`**: The **Lowercase Operator** (`code`).
+*   **`iw`**: The **Inner Word Text Object** (`code`).

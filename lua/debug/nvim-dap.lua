@@ -1,6 +1,6 @@
 return { -- ============= nvim-dap and more debugging ==========
   'mfussenegger/nvim-dap',
-  disabled = false,
+  enabled = true,
   -- Shows how to use the DAP plugin to debug your code.
   --
   -- Primarily focused on configuring the debugger for Go, but can

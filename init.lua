@@ -40,22 +40,45 @@ require('lazy').setup(
 
     -- Import theme first
     { import = 'themes' },
-
-    {
-      'OXY2DEV/markview.nvim',
-      enabled = false,
-      lazy = false,
-      dependencies = {
-        'saghen/blink.cmp',
-      },
-    },
+    -- theme.lua (prio = 1000)
 
     { import = 'core' },
+    -- harpooon
+    -- nvim-lint
+    -- nvim-lspconfig
+    -- nvim-treesitter
+    -- telescope
+    -- which-key (lazy = false, prio = 900)
+
     { import = 'code' },
+    -- blink.cmp
+    -- guess-indent.nvim
+    -- indent-blankline
+    -- nvim-autopairs
+    -- todo-comments.nvim
+
     { import = 'debug' },
+    -- nvim-dap
+
     { import = 'editor' },
+    -- conform.nvim
+    -- lazydev.nvim
+    -- neo-tree.nvim
+    -- nvim-ufo
+
+    { import = 'lang.markdown' },
+    -- markview.nvim (lazy = false)
+
     { import = 'mini' },
+    -- mini.nvim
+    --   mini.ai
+    --   mini.surround
+    --   mini.statusline
+
     { import = 'util' },
+    -- gitsigns.nvim
+
+    -- end of lazy setup
   }, -- END lazy.setup({}) where plugins are installed
 
   { import = 'ui' }
