@@ -11,7 +11,9 @@ return { -- ============= treesitter ===========
       'luadoc',
       'markdown',
       'markdown_inline',
+      'python',
       'query',
+      'sql',
       'vim',
       'vimdoc',
     }, -- END 'nvim-treesitter'.opts.ensure_installed

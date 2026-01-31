@@ -29,7 +29,6 @@ vim.keymap.set('i', '<CR>', function()
 
   -- 1. Pattern matching for various list types
   local indent, marker, punct, checkbox, padding
-
   -- Try to match different marker styles:
   -- Ordered with checkbox: "  1. [ ] "
   indent, marker, punct, checkbox, padding = prefix:match '^(%s*)(%d+)([.)])%s*(%[[ xX]%])(%s+)'
@@ -89,8 +88,8 @@ vim.keymap.set('i', '<CR>', function()
   vim.api.nvim_win_set_cursor(0, { row + 1, #next_marker })
 end, { buffer = true, desc = 'Smart list continuation' })
 
--- ================================ AUTO FORMAT MARKDOWN TABLES =====================================
--- ================================ AUTO FORMAT MARKDOWN TABLES =====================================
+-- ================================ AUTO FORMAT MARKDOWN TABLES =========================
+-- ================================ AUTO FORMAT MARKDOWN TABLES ==========================
 --
 local function format_markdown_table()
   -- 0. Get buffer, row, and lines
@@ -131,19 +130,22 @@ local function format_markdown_table()
   local col_widths = {}
 
   -- below, we use ipairs since table_lines is essentially a list
-  for _, line in ipairs(table_lines) do
+  for r, line in ipairs(table_lines) do
     -- split the row/line into cells based on |
-    local match = vim.split(line:match '^%s*|?(.*)|%s*$', '|') -- note capture group ?()
+    local cells = vim.split(line:match '^%s*|?(.*)|%s*$', '|') -- note capture group ?()
     -- guarding against nil match if line without | is accidentally parsed
-    if match then
+    if cells then
       --local cells = vim.split(line:match '^%s*|?(.*)|%s*$', '|') -- note capture group ?()
-      local cells = match
+      --local cells = match
       local row_data = {}
       -- Preserve text in the row, update col_widths if the new content is longest found
       for i, cell in ipairs(cells) do
         local content = vim.trim(cell) -- get text unpadded
         row_data[i] = content
-        col_widths[i] = math.max(col_widths[i] or 0, #content)
+        -- don*t use row 2 (|---|) dashes to count col width
+        if r ~= 2 then
+          col_widths[i] = math.max(col_widths[i] or 0, #content)
+        end
       end
       table.insert(parsed_rows, row_data)
     end
@@ -154,7 +156,7 @@ local function format_markdown_table()
   for r, row_data in ipairs(parsed_rows) do
     local line_parts = {}
     for c, cell in ipairs(row_data) do
-      local width = col_widths[c]
+      local width = col_widths[c] or 0
       if r == 2 then -- special handling for separator line
         table.insert(line_parts, string.rep('-', width + 2))
       else

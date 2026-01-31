@@ -1,0 +1,56 @@
+/*
+ * Copyright (c) 2020 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+/* THIS FILE WAS GENERATED!
+ *
+ * This file was generated automatically. You may or may not want to
+ * edit it directly.
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/backlight.h>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/outputs.h>
+#include <dt-bindings/zmk/rgb.h>
+
+    keymap {
+        compatible = "zmk,keymap";
+
+
+        layer_2 {
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans                                      &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans                                      &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans                  &trans      &trans                  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans          &trans  &trans  &trans      &trans  &trans  &trans          &trans  &trans  &trans  &trans  &trans
+            >;
+        };
+
+ 
+        keypad {
+            bindings = <
+&trans  &trans  &trans  &trans  &trans  &trans  &trans                                                    &trans     &trans     &n09    &n10    &n11    &trans  &trans
+&trans  &trans  &trans  &kp N  &trans  &trans  &trans                                                    &trans     &mc_toNv Y &kp N4  &kp N5  &kp N6  &trans  &trans
+&trans  &kp A  &trans  &trans  &trans  &trans  &trans  &trans        &trans      &trans  &trans          &trans     &mc_toNv H &kp N1  &kp N2  &kp N3  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans                        &to 5       &to 5                              &mc_toNv N &kp N0  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &mc_long_test P  &trans          &trans  &mc_toNv ESC  &trans      &trans  &mc_toNv ENTER  &kp SPACE          &trans  &trans  &trans  &trans  &trans
+            >;
+        };
+
+        keypadFixed {
+            bindings = <
+&trans  &trans  &trans  &trans           &trans  &trans  &trans                                                    &trans     &trans     &n09    &n10    &n11    &trans       &trans
+&trans  &trans  &trans  &kp N            &trans  &trans  &trans                                                    &trans     &mc_toNv Y &kp N4  &kp N5  &kp N6  &trans       &trans
+&trans  &kp A   &trans  &trans           &trans  &trans  &trans  &trans        &trans      &trans  &trans          &trans     &mc_toNv H &kp N1  &kp N2  &kp N3  &trans       &trans
+&trans  &trans  &trans  &trans           &trans  &trans                        &to 5       &to 5                              &mc_toNv N &kp N0  &trans  &trans  &mc_another  &trans
+&trans  &trans  &trans  &mc_long_test P  &trans          &trans  &mc_toNv ESC  &trans      &trans  &mc_toNv ENTER  &kp SPACE             &trans  &trans  &trans  &trans       &trans
+            >;
+        };
+
+ 
+
+ 
