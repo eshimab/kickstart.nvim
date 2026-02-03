@@ -9,6 +9,9 @@ return {
     init = function()
       vim.cmd.colorscheme 'gruvbox-material'
       vim.cmd.hi 'Comment gui=none'
+      -- Set more obvious colors for some chars
+      vim.api.nvim_set_hl(0, '@punctuation.delimiter', { fg = '#ffe200' })
+      vim.api.nvim_set_hl(0, '@punctuation.terminator', { fg = '#d78821' })
     end,
   },
 
@@ -24,4 +27,3 @@ return {
     end,
   },
 }
-

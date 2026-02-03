@@ -10,6 +10,10 @@ print 'Options Loaded > ~/.config/nvim/lua/options.lua'
 vim.opt.autoindent = true
 vim.opt.shiftwidth = 4 -- We ensure this workd in the /after dir
 
+-- create indicating of text column in files
+vim.opt.colorcolumn = '100'
+vim.api.nvim_set_hl(0, 'ColorColumn', { bg = '#32302f' })
+
 vim.opt.autoread = true
 vim.opt.autowrite = false
 vim.opt.autowriteall = false
